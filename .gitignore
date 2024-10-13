@@ -28,4 +28,4 @@ go.work.sum
 .idea
 
 # Private key for accounts
-accounts
+conf/accounts
