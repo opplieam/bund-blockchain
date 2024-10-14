@@ -49,9 +49,10 @@ func run(log *slog.Logger) error {
 	// The state value represents the blockchain node and manages the blockchain
 	// database and provides an API for application support.
 	stateM, err := state.New(state.Config{
-		BeneficiaryID: database.PublicKeyToAccountID(privateKey.PublicKey),
-		Genesis:       genesisInfo,
-		EvHandler:     ev,
+		BeneficiaryID:  database.PublicKeyToAccountID(privateKey.PublicKey),
+		Genesis:        genesisInfo,
+		SelectStrategy: cfg.State.SelectStrategy,
+		EvHandler:      ev,
 	})
 	if err != nil {
 		return err

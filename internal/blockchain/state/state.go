@@ -7,6 +7,7 @@ import (
 
 	"github.com/opplieam/bund-blockchain/internal/blockchain/database"
 	"github.com/opplieam/bund-blockchain/internal/blockchain/genesis"
+	"github.com/opplieam/bund-blockchain/internal/blockchain/mempool"
 )
 
 // EventHandler defines a function that is called when events
@@ -16,9 +17,10 @@ type EventHandler func(v string, args ...any)
 // Config represents the configuration required to start
 // the blockchain node.
 type Config struct {
-	BeneficiaryID database.AccountID
-	Genesis       genesis.Genesis
-	EvHandler     EventHandler
+	BeneficiaryID  database.AccountID
+	Genesis        genesis.Genesis
+	SelectStrategy string
+	EvHandler      EventHandler
 }
 
 // State manages the blockchain database.
@@ -29,6 +31,7 @@ type State struct {
 	evHandler     EventHandler
 
 	genesis genesis.Genesis
+	mempool *mempool.Mempool
 	db      *database.Database
 }
 
@@ -45,6 +48,11 @@ func New(cfg Config) (*State, error) {
 	if err != nil {
 		return nil, err
 	}
+	// Construct a mempool with the specified sort strategy.
+	mempool, err := mempool.NewWithStrategy(cfg.SelectStrategy)
+	if err != nil {
+		return nil, err
+	}
 
 	// Create the State to provide support for managing the blockchain.
 	state := State{
@@ -52,6 +60,7 @@ func New(cfg Config) (*State, error) {
 		evHandler:     ev,
 
 		genesis: cfg.Genesis,
+		mempool: mempool,
 		db:      db,
 	}
 	return &state, nil
@@ -63,4 +72,24 @@ func (s *State) Shutdown() error {
 	defer s.evHandler("state: shutdown: completed")
 
 	return nil
+}
+
+// MempoolLength returns the current length of the mempool.
+func (s *State) MempoolLength() int {
+	return s.mempool.Count()
+}
+
+// Mempool returns a copy of the mempool.
+func (s *State) Mempool() []database.BlockTx {
+	return s.mempool.PickBest()
+}
+
+// UpsertMempool adds a new transaction to the mempool.
+func (s *State) UpsertMempool(tx database.BlockTx) error {
+	return s.mempool.Upsert(tx)
+}
+
+// Accounts returns a copy of the database accounts.
+func (s *State) Accounts() map[database.AccountID]database.Account {
+	return s.db.Copy()
 }

@@ -18,7 +18,8 @@ type NameService struct {
 }
 
 type State struct {
-	Beneficiary string
+	Beneficiary    string
+	SelectStrategy string
 }
 
 type WebConfig struct {
@@ -47,7 +48,8 @@ func NewConfig() Config {
 			Folder: getenv.GetEnv("PRIVATE_KEY_PATH", "conf/accounts"),
 		},
 		State: State{
-			Beneficiary: getenv.GetEnv("BENEFICIARY", "miner1"),
+			Beneficiary:    getenv.GetEnv("BENEFICIARY", "miner1"),
+			SelectStrategy: getenv.GetEnv("SELECT_STRATEGY", "Tip"),
 		},
 	}
 }
