@@ -61,6 +61,6 @@ func New(cfg Config) (*State, error) {
 func (s *State) Shutdown() error {
 	s.evHandler("state: shutdown: started")
 	defer s.evHandler("state: shutdown: completed")
-	
+
 	return nil
 }

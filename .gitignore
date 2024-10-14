@@ -29,3 +29,5 @@ go.work.sum
 
 # Private key for accounts
 conf/accounts
+
+bin
