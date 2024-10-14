@@ -21,10 +21,12 @@ func New(logger *slog.Logger, state *state.State) *Handler {
 	}
 }
 
+// Genesis returns the genesis information.
 func (h *Handler) Genesis(c echo.Context) error {
 	return c.JSON(http.StatusOK, h.State.Genesis())
 }
 
+// Accounts returns the current balances for all users.
 func (h *Handler) Accounts(c echo.Context) error {
 	accountStr := c.Param("account")
 
@@ -47,6 +49,7 @@ func (h *Handler) Accounts(c echo.Context) error {
 	return c.JSON(200, accounts)
 }
 
+// Mempool returns the set of uncommitted transactions.
 func (h *Handler) Mempool(c echo.Context) error {
 	accountStr := c.Param("account")
 	mempool := h.State.Mempool()
@@ -73,4 +76,28 @@ func (h *Handler) Mempool(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, txResult)
+}
+
+// SubmitWalletTransaction adds new transactions to the mempool.
+func (h *Handler) SubmitWalletTransaction(c echo.Context) error {
+	var signedTx database.SignedTx
+	if err := c.Bind(&signedTx); err != nil {
+		return c.String(http.StatusBadRequest, err.Error())
+	}
+	h.Log.Info("add trans", "sig|nonce", signedTx, "from", signedTx.FromID, "to", signedTx.ToID, "value", signedTx.Value, "tip", signedTx.Tip)
+
+	// Ask the state package to add this transaction to the mempool. Only the
+	// checks are the transaction signature and the recipient account format.
+	// It's up to the wallet to make sure the account has a proper balance and
+	// nonce. Fees will be taken if this transaction is mined into a block.
+	if err := h.State.UpsertWalletTransaction(signedTx); err != nil {
+		return c.String(http.StatusBadRequest, err.Error())
+	}
+
+	response := struct {
+		Status string `json:"status"`
+	}{
+		Status: "transactions added to mempool",
+	}
+	return c.JSON(http.StatusOK, response)
 }

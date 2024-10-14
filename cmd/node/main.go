@@ -39,7 +39,7 @@ func run(log *slog.Logger) error {
 
 	ev := func(v string, args ...any) {
 		s := fmt.Sprintf(v, args...)
-		log.Info(s, "traceid", "00000000-0000-0000-0000-000000000000")
+		log.Info(s, "trace_id", "00000000-0000-0000-0000-000000000000")
 	}
 
 	// Load the genesis file for blockchain settings and origin balances.
