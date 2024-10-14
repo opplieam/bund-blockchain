@@ -3,11 +3,13 @@ package main
 import (
 	"fmt"
 	"log/slog"
+	"net/http"
 	"os"
 	"runtime"
 
 	"github.com/ethereum/go-ethereum/crypto"
 	_ "github.com/joho/godotenv/autoload"
+	"github.com/labstack/echo/v4"
 	"github.com/opplieam/bund-blockchain/internal/blockchain/database"
 	"github.com/opplieam/bund-blockchain/internal/blockchain/genesis"
 	"github.com/opplieam/bund-blockchain/internal/blockchain/state"
@@ -58,6 +60,20 @@ func run(log *slog.Logger) error {
 		return err
 	}
 	defer stateM.Shutdown()
+
+	// ===========================================================================================
+	log.Info("http service start", "addr", cfg.Web.Addr)
+	e := echo.New()
+	setupRoutes(e, log, stateM)
+
+	srv := &http.Server{
+		Addr:         cfg.Web.Addr,
+		ReadTimeout:  cfg.Web.ReadTimeout,
+		WriteTimeout: cfg.Web.WriteTimeout,
+		IdleTimeout:  cfg.Web.IdleTimeout,
+		Handler:      e,
+	}
+	srv.ListenAndServe()
 
 	return nil
 }
