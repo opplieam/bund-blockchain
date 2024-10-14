@@ -23,6 +23,21 @@ type Tx struct {
 	Data    []byte    `json:"data"`     // Ethereum: Extra data related to the transaction.
 }
 
+// NewTx constructs a new transaction.
+func NewTx(chainID uint16, nonce uint64, fromID AccountID, toID AccountID, value uint64, tip uint64, data []byte) (Tx, error) {
+	tx := Tx{
+		ChainID: chainID,
+		Nonce:   nonce,
+		FromID:  fromID,
+		ToID:    toID,
+		Value:   value,
+		Tip:     tip,
+		Data:    data,
+	}
+
+	return tx, nil
+}
+
 // SignedTx is a signed version of the transaction. This is how clients like
 // a wallet provide transactions for inclusion into the blockchain.
 type SignedTx struct {
