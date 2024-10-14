@@ -16,4 +16,6 @@ func setupRoutes(e *echo.Echo, log *slog.Logger, state *state.State) {
 
 	h := handler.New(log, state)
 	e.GET("/genesis/list", h.Genesis)
+	e.GET("/accounts/list", h.Accounts)
+	e.GET("/accounts/list/:account", h.Accounts)
 }
