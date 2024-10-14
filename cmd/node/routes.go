@@ -18,4 +18,6 @@ func setupRoutes(e *echo.Echo, log *slog.Logger, state *state.State) {
 	e.GET("/genesis/list", h.Genesis)
 	e.GET("/accounts/list", h.Accounts)
 	e.GET("/accounts/list/:account", h.Accounts)
+	e.GET("/tx/uncommitted/list", h.Mempool)
+	e.GET("/tx/uncommitted/list/:account", h.Mempool)
 }

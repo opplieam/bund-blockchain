@@ -46,3 +46,31 @@ func (h *Handler) Accounts(c echo.Context) error {
 
 	return c.JSON(200, accounts)
 }
+
+func (h *Handler) Mempool(c echo.Context) error {
+	accountStr := c.Param("account")
+	mempool := h.State.Mempool()
+
+	txResult := []tx{} // If there is no mempool return empty slice
+	for _, tran := range mempool {
+		if accountStr != "" && ((accountStr != string(tran.FromID)) && (accountStr != string(tran.ToID))) {
+			continue
+		}
+
+		txResult = append(txResult, tx{
+			FromAccount: tran.FromID,
+			To:          tran.ToID,
+			ChainID:     tran.ChainID,
+			Nonce:       tran.Nonce,
+			Value:       tran.Value,
+			Tip:         tran.Tip,
+			Data:        tran.Data,
+			TimeStamp:   tran.TimeStamp,
+			GasPrice:    tran.GasPrice,
+			GasUnits:    tran.GasUnits,
+			Sig:         tran.SignatureString(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, txResult)
+}
