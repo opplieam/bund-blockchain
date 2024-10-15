@@ -20,6 +20,6 @@ func setupRoutes(e *echo.Echo, log *slog.Logger, state *state.State) {
 	e.GET("/accounts/list/:account", h.Accounts)
 	e.GET("/tx/uncommitted/list", h.Mempool)
 	e.GET("/tx/uncommitted/list/:account", h.Mempool)
-	//e.POST("/tx/submit")
+	e.POST("/tx/submit", h.SubmitWalletTransaction)
 	//e.POST("/tx/proof/:block")
 }
