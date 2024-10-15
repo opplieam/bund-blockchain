@@ -7,14 +7,15 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/opplieam/bund-blockchain/internal/blockchain/state"
 	"github.com/opplieam/bund-blockchain/internal/handler"
+	"github.com/opplieam/bund-blockchain/internal/nameservice"
 	slogecho "github.com/samber/slog-echo"
 )
 
-func setupRoutes(e *echo.Echo, log *slog.Logger, state *state.State) {
+func setupRoutes(e *echo.Echo, log *slog.Logger, state *state.State, ns *nameservice.NameService) {
 	e.Use(slogecho.New(log))
 	e.Use(middleware.Recover())
 
-	h := handler.New(log, state)
+	h := handler.New(log, state, ns)
 	e.GET("/genesis/list", h.Genesis)
 	e.GET("/accounts/list", h.Accounts)
 	e.GET("/accounts/list/:account", h.Accounts)

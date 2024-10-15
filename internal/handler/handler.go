@@ -7,17 +7,20 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/opplieam/bund-blockchain/internal/blockchain/database"
 	"github.com/opplieam/bund-blockchain/internal/blockchain/state"
+	"github.com/opplieam/bund-blockchain/internal/nameservice"
 )
 
 type Handler struct {
 	Log   *slog.Logger
 	State *state.State
+	NS    *nameservice.NameService
 }
 
-func New(logger *slog.Logger, state *state.State) *Handler {
+func New(logger *slog.Logger, state *state.State, ns *nameservice.NameService) *Handler {
 	return &Handler{
 		Log:   logger,
 		State: state,
+		NS:    ns,
 	}
 }
 
@@ -62,7 +65,9 @@ func (h *Handler) Mempool(c echo.Context) error {
 
 		txResult = append(txResult, tx{
 			FromAccount: tran.FromID,
+			FromName:    h.NS.Lookup(tran.FromID),
 			To:          tran.ToID,
+			ToName:      h.NS.Lookup(tran.ToID),
 			ChainID:     tran.ChainID,
 			Nonce:       tran.Nonce,
 			Value:       tran.Value,

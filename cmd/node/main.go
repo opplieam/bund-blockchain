@@ -13,6 +13,7 @@ import (
 	"github.com/opplieam/bund-blockchain/internal/blockchain/database"
 	"github.com/opplieam/bund-blockchain/internal/blockchain/genesis"
 	"github.com/opplieam/bund-blockchain/internal/blockchain/state"
+	"github.com/opplieam/bund-blockchain/internal/nameservice"
 )
 
 func main() {
@@ -29,6 +30,22 @@ func run(log *slog.Logger) error {
 	// Load config
 	cfg := NewConfig()
 
+	// =========================================================================
+	// Name Service Support
+
+	// The nameservice package provides name resolution for account addresses.
+	// The names come from the file names in the conf/accounts folder.
+	ns, err := nameservice.New(cfg.NameService.Folder)
+	if err != nil {
+		return fmt.Errorf("unable to load account name service: %w", err)
+	}
+
+	// Logging the accounts for documentation in the logs.
+	for account, name := range ns.Copy() {
+		log.Info("startup", "status", "nameservice", "name", name, "account", account)
+	}
+
+	// =========================================================================
 	// Need to load the private key file for the configured beneficiary so the
 	// account can get credited with fees and tips.
 	path := fmt.Sprintf("%s/%s.ecdsa", cfg.NameService.Folder, cfg.State.Beneficiary)
@@ -64,7 +81,7 @@ func run(log *slog.Logger) error {
 	// ===========================================================================================
 	log.Info("http service start", "addr", cfg.Web.Addr)
 	e := echo.New()
-	setupRoutes(e, log, stateM)
+	setupRoutes(e, log, stateM, ns)
 
 	srv := &http.Server{
 		Addr:         cfg.Web.Addr,
