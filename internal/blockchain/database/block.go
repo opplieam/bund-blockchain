@@ -1,6 +1,7 @@
 package database
 
 import (
+	"github.com/opplieam/bund-blockchain/internal/blockchain/merkle"
 	"github.com/opplieam/bund-blockchain/internal/utils/signature"
 )
 

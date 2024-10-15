@@ -3,9 +3,9 @@
 // Licensed under the MIT License, see LICENCE file for details.
 // This code has been cleaned up, refactored, and turned into generics.
 
-// Package merkle provides an implementation of a merkel tree for validation
+// Package merkle provides an implementation of a merkle tree for validation
 // support for the blockchain.
-package merkel
+package merkle
 
 import (
 	"bytes"
