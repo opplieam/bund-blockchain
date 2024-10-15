@@ -31,7 +31,7 @@ func run(log *slog.Logger) error {
 	cfg := NewConfig()
 
 	// =========================================================================
-	// Name Service Support
+	// Name Service Support. ONLY FOR DEV
 
 	// The nameservice package provides name resolution for account addresses.
 	// The names come from the file names in the conf/accounts folder.
