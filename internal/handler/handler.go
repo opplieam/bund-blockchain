@@ -49,7 +49,24 @@ func (h *Handler) Accounts(c echo.Context) error {
 		accounts = map[database.AccountID]database.Account{accountID: account}
 	}
 
-	return c.JSON(200, accounts)
+	resp := make([]act, 0, len(accounts))
+	for account, info := range accounts {
+		act := act{
+			Account: account,
+			Name:    h.NS.Lookup(account),
+			Balance: info.Balance,
+			Nonce:   info.Nonce,
+		}
+		resp = append(resp, act)
+	}
+
+	ai := actInfo{
+		LastestBlock: h.State.LatestBlock().Hash(),
+		Uncommitted:  len(h.State.Mempool()),
+		Accounts:     resp,
+	}
+
+	return c.JSON(200, ai)
 }
 
 // Mempool returns the set of uncommitted transactions.
