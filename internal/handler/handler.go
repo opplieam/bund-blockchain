@@ -106,3 +106,8 @@ func (h *Handler) SubmitWalletTransaction(c echo.Context) error {
 	}
 	return c.JSON(http.StatusOK, response)
 }
+
+func (h *Handler) Cancel(c echo.Context) error {
+	h.State.Worker.SignalCancelMining()
+	return c.String(http.StatusOK, "cancelled")
+}

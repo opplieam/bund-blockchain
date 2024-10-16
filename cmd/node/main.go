@@ -13,6 +13,7 @@ import (
 	"github.com/opplieam/bund-blockchain/internal/blockchain/database"
 	"github.com/opplieam/bund-blockchain/internal/blockchain/genesis"
 	"github.com/opplieam/bund-blockchain/internal/blockchain/state"
+	"github.com/opplieam/bund-blockchain/internal/blockchain/worker"
 	"github.com/opplieam/bund-blockchain/internal/nameservice"
 )
 
@@ -77,6 +78,11 @@ func run(log *slog.Logger) error {
 		return err
 	}
 	defer stateM.Shutdown()
+
+	// The worker package implements the different workflows such as mining,
+	// transaction peer sharing, and peer updates. The worker will register
+	// itself with the state.
+	worker.Run(stateM, ev)
 
 	// ===========================================================================================
 	log.Info("http service start", "addr", cfg.Web.Addr)

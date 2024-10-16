@@ -16,6 +16,10 @@ func setupRoutes(e *echo.Echo, log *slog.Logger, state *state.State, ns *nameser
 	e.Use(middleware.Recover())
 
 	h := handler.New(log, state, ns)
+
+	// Trying
+	e.GET("/genesis/cancel", h.Cancel)
+
 	e.GET("/genesis/list", h.Genesis)
 	e.GET("/accounts/list", h.Accounts)
 	e.GET("/accounts/list/:account", h.Accounts)
