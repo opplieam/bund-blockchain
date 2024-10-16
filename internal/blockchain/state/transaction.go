@@ -1,6 +1,8 @@
 package state
 
 import (
+	"context"
+
 	"github.com/opplieam/bund-blockchain/internal/blockchain/database"
 )
 
@@ -22,6 +24,14 @@ func (s *State) UpsertWalletTransaction(signedTx database.SignedTx) error {
 	tx := database.NewBlockTx(signedTx, s.genesis.GasPrice, oneUnitOfGas)
 	if err := s.mempool.Upsert(tx); err != nil {
 		return err
+	}
+
+	// TRYING
+	if s.mempool.Count() == 6 {
+		go func() {
+			s.MineNewBlock(context.Background())
+			s.mempool.Truncate()
+		}()
 	}
 
 	return nil
