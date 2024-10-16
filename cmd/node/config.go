@@ -19,6 +19,7 @@ type NameService struct {
 
 type State struct {
 	Beneficiary    string
+	DBPath         string
 	SelectStrategy string
 }
 
@@ -49,6 +50,7 @@ func NewConfig() Config {
 		},
 		State: State{
 			Beneficiary:    getenv.GetEnv("BENEFICIARY", "miner1"),
+			DBPath:         getenv.GetEnv("DB_PATH", "data/miner1/"),
 			SelectStrategy: getenv.GetEnv("SELECT_STRATEGY", "Tip"),
 		},
 	}

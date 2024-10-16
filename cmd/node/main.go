@@ -13,6 +13,7 @@ import (
 	"github.com/opplieam/bund-blockchain/internal/blockchain/database"
 	"github.com/opplieam/bund-blockchain/internal/blockchain/genesis"
 	"github.com/opplieam/bund-blockchain/internal/blockchain/state"
+	"github.com/opplieam/bund-blockchain/internal/blockchain/storage/disk"
 	"github.com/opplieam/bund-blockchain/internal/blockchain/worker"
 	"github.com/opplieam/bund-blockchain/internal/nameservice"
 )
@@ -60,6 +61,12 @@ func run(log *slog.Logger) error {
 		log.Info(s, "trace_id", "00000000-0000-0000-0000-000000000000")
 	}
 
+	// Construct the use of disk storage
+	storage, err := disk.New(cfg.State.DBPath)
+	if err != nil {
+		return err
+	}
+
 	// Load the genesis file for blockchain settings and origin balances.
 	genesisInfo, err := genesis.Load()
 	if err != nil {
@@ -70,6 +77,7 @@ func run(log *slog.Logger) error {
 	// database and provides an API for application support.
 	stateM, err := state.New(state.Config{
 		BeneficiaryID:  database.PublicKeyToAccountID(privateKey.PublicKey),
+		Storage:        storage,
 		Genesis:        genesisInfo,
 		SelectStrategy: cfg.State.SelectStrategy,
 		EvHandler:      ev,
