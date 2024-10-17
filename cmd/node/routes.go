@@ -24,4 +24,16 @@ func setupRoutes(e *echo.Echo, log *slog.Logger, state *state.State, ns *nameser
 	e.GET("/tx/uncommitted/list/:account", h.Mempool)
 	e.POST("/tx/submit", h.SubmitWalletTransaction)
 	//e.POST("/tx/proof/:block")
+
+}
+
+func setupPrivateRoutes(e *echo.Echo, log *slog.Logger, state *state.State, ns *nameservice.NameService) {
+	e.Use(slogecho.New(log))
+	e.Use(middleware.Recover())
+
+	h := handler.New(log, state, ns)
+	e.POST("/node/peers", h.SubmitPeer)
+	e.GET("/node/status", h.Status)
+	e.GET("/node/tx/list", h.PrivateMempool)
+	e.GET("/node/block/list/:from/:to", h.BlocksByNumber)
 }

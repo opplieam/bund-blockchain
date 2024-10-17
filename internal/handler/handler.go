@@ -1,11 +1,14 @@
 package handler
 
 import (
+	"fmt"
 	"log/slog"
 	"net/http"
+	"strconv"
 
 	"github.com/labstack/echo/v4"
 	"github.com/opplieam/bund-blockchain/internal/blockchain/database"
+	"github.com/opplieam/bund-blockchain/internal/blockchain/peer"
 	"github.com/opplieam/bund-blockchain/internal/blockchain/state"
 	"github.com/opplieam/bund-blockchain/internal/nameservice"
 )
@@ -127,4 +130,70 @@ func (h *Handler) SubmitWalletTransaction(c echo.Context) error {
 func (h *Handler) Cancel(c echo.Context) error {
 	h.State.Worker.SignalCancelMining()
 	return c.String(http.StatusOK, "cancelled")
+}
+
+func (h *Handler) Status(c echo.Context) error {
+	latestBlock := h.State.LatestBlock()
+
+	status := peer.PeerStatus{
+		LatestBlockHash:   latestBlock.Hash(),
+		LatestBlockNumber: latestBlock.Header.Number,
+		KnownPeers:        h.State.KnownExternalPeers(),
+	}
+	return c.JSON(http.StatusOK, status)
+}
+
+func (h *Handler) PrivateMempool(c echo.Context) error {
+	txs := h.State.Mempool()
+	return c.JSON(http.StatusOK, txs)
+}
+
+func (h *Handler) BlocksByNumber(c echo.Context) error {
+	fromStr := c.Param("from")
+	if fromStr == "latest" || fromStr == "" {
+		fromStr = fmt.Sprintf("%d", state.QueryLatest)
+	}
+
+	toStr := c.Param("to")
+	if toStr == "latest" || toStr == "" {
+		toStr = fmt.Sprintf("%d", state.QueryLatest)
+	}
+
+	from, err := strconv.ParseUint(fromStr, 10, 64)
+	if err != nil {
+		return c.String(http.StatusBadRequest, err.Error())
+	}
+	to, err := strconv.ParseUint(toStr, 10, 64)
+	if err != nil {
+		return c.String(http.StatusBadRequest, err.Error())
+	}
+
+	if from > to {
+		return c.String(http.StatusBadRequest, "from must be less than to")
+	}
+
+	blocks := h.State.QueryBlocksByNumber(from, to)
+	if len(blocks) == 0 {
+		return c.JSON(http.StatusNoContent, nil)
+	}
+
+	blockData := make([]database.BlockData, len(blocks))
+	for i, block := range blocks {
+		blockData[i] = database.NewBlockData(block)
+	}
+
+	return c.JSON(http.StatusOK, blockData)
+}
+
+func (h *Handler) SubmitPeer(c echo.Context) error {
+	var peer peer.Peer
+	if err := c.Bind(&peer); err != nil {
+		return c.String(http.StatusBadRequest, err.Error())
+	}
+
+	if !h.State.AddKnownPeer(peer) {
+		h.Log.Info("adding peer", "host", peer.Host)
+	}
+
+	return c.JSON(http.StatusOK, nil)
 }

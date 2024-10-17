@@ -8,6 +8,7 @@ import (
 	"github.com/opplieam/bund-blockchain/internal/blockchain/database"
 	"github.com/opplieam/bund-blockchain/internal/blockchain/genesis"
 	"github.com/opplieam/bund-blockchain/internal/blockchain/mempool"
+	"github.com/opplieam/bund-blockchain/internal/blockchain/peer"
 )
 
 // EventHandler defines a function that is called when events
@@ -26,9 +27,11 @@ type Worker interface {
 // the blockchain node.
 type Config struct {
 	BeneficiaryID  database.AccountID
+	Host           string
 	Storage        database.Storage
 	Genesis        genesis.Genesis
 	SelectStrategy string
+	KnownPeers     *peer.PeerSet
 	EvHandler      EventHandler
 }
 
@@ -37,12 +40,14 @@ type State struct {
 	mu sync.RWMutex
 
 	beneficiaryID database.AccountID
+	host          string
 	evHandler     EventHandler
 
-	storage database.Storage
-	genesis genesis.Genesis
-	mempool *mempool.Mempool
-	db      *database.Database
+	knownPeers *peer.PeerSet
+	storage    database.Storage
+	genesis    genesis.Genesis
+	mempool    *mempool.Mempool
+	db         *database.Database
 
 	Worker Worker
 }
@@ -69,12 +74,14 @@ func New(cfg Config) (*State, error) {
 	// Create the State to provide support for managing the blockchain.
 	state := State{
 		beneficiaryID: cfg.BeneficiaryID,
+		host:          cfg.Host,
 		storage:       cfg.Storage,
 		evHandler:     ev,
 
-		genesis: cfg.Genesis,
-		mempool: mempool,
-		db:      db,
+		knownPeers: cfg.KnownPeers,
+		genesis:    cfg.Genesis,
+		mempool:    mempool,
+		db:         db,
 	}
 	// The Worker is not set here. The call to worker.Run will assign itself
 	// and start everything up and running for the node.
@@ -96,6 +103,11 @@ func (s *State) Shutdown() error {
 	s.Worker.Shutdown()
 
 	return nil
+}
+
+// Host returns a copy of host information.
+func (s *State) Host() string {
+	return s.host
 }
 
 // LatestBlock returns a copy the current latest block.
@@ -126,4 +138,28 @@ func (s *State) Accounts() map[database.AccountID]database.Account {
 // Genesis returns a copy of the genesis information.
 func (s *State) Genesis() genesis.Genesis {
 	return s.genesis
+}
+
+// AddKnownPeer provides the ability to add a new peer to
+// the known peer list.
+func (s *State) AddKnownPeer(peer peer.Peer) bool {
+	return s.knownPeers.Add(peer)
+}
+
+// RemoveKnownPeer provides the ability to remove a peer from
+// the known peer list.
+func (s *State) RemoveKnownPeer(peer peer.Peer) {
+	s.knownPeers.Remove(peer)
+}
+
+// KnownExternalPeers retrieves a copy of the known peer list without
+// including this node.
+func (s *State) KnownExternalPeers() []peer.Peer {
+	return s.knownPeers.Copy(s.host)
+}
+
+// KnownPeers retrieves a copy of the full known peer list which includes
+// this node as well. Used by the PoA selection algorithm.
+func (s *State) KnownPeers() []peer.Peer {
+	return s.knownPeers.Copy("")
 }

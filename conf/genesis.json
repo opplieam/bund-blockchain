@@ -2,7 +2,7 @@
   "date": "2024-10-14T00:00:00.000000000Z",
   "chain_id": 1,
   "trans_per_block": 10,
-  "difficulty": 2,
+  "difficulty": 3,
   "mining_reward": 700,
   "gas_price": 15,
   "balances": {

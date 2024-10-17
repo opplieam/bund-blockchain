@@ -2,6 +2,7 @@ package main
 
 import (
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/opplieam/bund-blockchain/internal/utils/getenv"
@@ -21,10 +22,12 @@ type State struct {
 	Beneficiary    string
 	DBPath         string
 	SelectStrategy string
+	OriginPeers    []string
 }
 
 type WebConfig struct {
 	Addr            string
+	PrivateAddr     string
 	WriteTimeout    time.Duration
 	ReadTimeout     time.Duration
 	IdleTimeout     time.Duration
@@ -37,9 +40,12 @@ func NewConfig() Config {
 	idleTimeout, _ := strconv.Atoi(getenv.GetEnv("WEB_IDLE_TIMEOUT", "120"))
 	shutDownTimeout, _ := strconv.Atoi(getenv.GetEnv("WEB_SHUTDOWN_TIMEOUT", "20"))
 
+	originPeers := strings.Split(getenv.GetEnv("ORIGIN_PEERS", ":3030"), ",")
+
 	return Config{
 		Web: WebConfig{
 			Addr:            getenv.GetEnv("WEB_ADDR", ":3000"),
+			PrivateAddr:     getenv.GetEnv("WEB_PRIVATE_ADDR", ":3030"),
 			WriteTimeout:    time.Duration(writeTimeout) * time.Second,
 			ReadTimeout:     time.Duration(readTimeout) * time.Second,
 			IdleTimeout:     time.Duration(idleTimeout) * time.Second,
@@ -52,6 +58,7 @@ func NewConfig() Config {
 			Beneficiary:    getenv.GetEnv("BENEFICIARY", "miner1"),
 			DBPath:         getenv.GetEnv("DB_PATH", "data/miner1/"),
 			SelectStrategy: getenv.GetEnv("SELECT_STRATEGY", "Tip"),
+			OriginPeers:    originPeers,
 		},
 	}
 }

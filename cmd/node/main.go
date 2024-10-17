@@ -12,6 +12,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/opplieam/bund-blockchain/internal/blockchain/database"
 	"github.com/opplieam/bund-blockchain/internal/blockchain/genesis"
+	"github.com/opplieam/bund-blockchain/internal/blockchain/peer"
 	"github.com/opplieam/bund-blockchain/internal/blockchain/state"
 	"github.com/opplieam/bund-blockchain/internal/blockchain/storage/disk"
 	"github.com/opplieam/bund-blockchain/internal/blockchain/worker"
@@ -56,6 +57,14 @@ func run(log *slog.Logger) error {
 		return fmt.Errorf("unable to load private key for node: %w", err)
 	}
 
+	// A peer set is a collection of known nodes in the network so transactions
+	// and blocks can be shared.
+	peerSet := peer.NewPeerSet()
+	for _, host := range cfg.State.OriginPeers {
+		peerSet.Add(peer.New(host))
+	}
+	peerSet.Add(peer.New(cfg.Web.PrivateAddr))
+
 	ev := func(v string, args ...any) {
 		s := fmt.Sprintf(v, args...)
 		log.Info(s, "trace_id", "00000000-0000-0000-0000-000000000000")
@@ -77,9 +86,11 @@ func run(log *slog.Logger) error {
 	// database and provides an API for application support.
 	stateM, err := state.New(state.Config{
 		BeneficiaryID:  database.PublicKeyToAccountID(privateKey.PublicKey),
+		Host:           cfg.Web.PrivateAddr,
 		Storage:        storage,
 		Genesis:        genesisInfo,
 		SelectStrategy: cfg.State.SelectStrategy,
+		KnownPeers:     peerSet,
 		EvHandler:      ev,
 	})
 	if err != nil {
@@ -97,14 +108,27 @@ func run(log *slog.Logger) error {
 	e := echo.New()
 	setupRoutes(e, log, stateM, ns)
 
-	srv := &http.Server{
+	publicSrv := &http.Server{
 		Addr:         cfg.Web.Addr,
 		ReadTimeout:  cfg.Web.ReadTimeout,
 		WriteTimeout: cfg.Web.WriteTimeout,
 		IdleTimeout:  cfg.Web.IdleTimeout,
 		Handler:      e,
 	}
-	srv.ListenAndServe()
+	go func() {
+		publicSrv.ListenAndServe()
+	}()
+	// ===========================================================================================
+	pe := echo.New()
+	setupPrivateRoutes(pe, log, stateM, ns)
 
+	privateSrv := &http.Server{
+		Addr:         cfg.Web.Addr,
+		ReadTimeout:  cfg.Web.ReadTimeout,
+		WriteTimeout: cfg.Web.WriteTimeout,
+		IdleTimeout:  cfg.Web.IdleTimeout,
+		Handler:      pe,
+	}
+	privateSrv.ListenAndServe()
 	return nil
 }
