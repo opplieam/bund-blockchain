@@ -219,3 +219,38 @@ func (h *Handler) SubmitNodeTransaction(c echo.Context) error {
 	}
 	return c.JSON(http.StatusOK, resp)
 }
+
+// ProposeBlock takes a block received from a peer, validates it and
+// if that passes, adds the block to the local blockchain.
+func (h *Handler) ProposeBlock(c echo.Context) error {
+	// Decode the JSON in the post call into a file system block.
+	var blockData database.BlockData
+	if err := c.Bind(&blockData); err != nil {
+		return c.String(http.StatusBadRequest, err.Error())
+	}
+
+	// Convert the block data into a block. This action will create a merkle
+	// tree for the set of transactions required for blockchain operations.
+	block, err := database.ToBlock(blockData)
+	if err != nil {
+		return fmt.Errorf("unable to decode block: %w", err)
+	}
+
+	// Ask the state package to validate the proposed block. If the block
+	// passes validation, it will be added to the blockchain database.
+	if err := h.State.ProcessProposedBlock(block); err != nil {
+		//if errors.Is(err, database.ErrChainForked) {
+		//	h.State.Reorganize()
+		//}
+
+		return c.String(http.StatusBadRequest, "block not accepted")
+	}
+
+	resp := struct {
+		Status string `json:"status"`
+	}{
+		Status: "accepted",
+	}
+
+	return c.JSON(http.StatusOK, resp)
+}
