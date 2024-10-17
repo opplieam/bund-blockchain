@@ -16,7 +16,10 @@ SHELL := /bin/bash
 # go run cmd/wallet/main.go account -a opp
 
 up:
-	go run cmd/node/*.go
+	go run cmd/node/*.go miner1
+
+up2:
+	go run cmd/node/*.go miner2
 
 # ==============================================================================
 # Transactions

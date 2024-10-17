@@ -8,7 +8,7 @@ import (
 	"runtime"
 
 	"github.com/ethereum/go-ethereum/crypto"
-	_ "github.com/joho/godotenv/autoload"
+	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/opplieam/bund-blockchain/internal/blockchain/database"
 	"github.com/opplieam/bund-blockchain/internal/blockchain/genesis"
@@ -29,6 +29,19 @@ func main() {
 
 func run(log *slog.Logger) error {
 	log.Info("start up", "GOMAXPROCS", runtime.GOMAXPROCS(0))
+
+	// Load Env
+	args := os.Args[1]
+	switch args {
+	case "miner1":
+		if err := godotenv.Load("conf/miner1.env"); err != nil {
+			return err
+		}
+	case "miner2":
+		if err := godotenv.Load("conf/miner2.env"); err != nil {
+			return err
+		}
+	}
 
 	// Load config
 	cfg := NewConfig()
