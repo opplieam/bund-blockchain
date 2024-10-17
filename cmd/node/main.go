@@ -1,11 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
 	"runtime"
+	"syscall"
 
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/joho/godotenv"
@@ -116,8 +119,15 @@ func run(log *slog.Logger) error {
 	// itself with the state.
 	worker.Run(stateM, ev)
 
+	// Make a channel to listen for an interrupt or terminate signal from the OS.
+	// Use a buffered channel because the signal package requires it.
+	shutdown := make(chan os.Signal, 1)
+	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM)
+	// Make a channel to listen for errors coming from the listener. Use a
+	// buffered channel so the goroutine can exit if we don't collect this error.
+	serverErrors := make(chan error, 1)
+
 	// ===========================================================================================
-	log.Info("http service start", "addr", cfg.Web.Addr)
 	e := echo.New()
 	setupRoutes(e, log, stateM, ns)
 
@@ -129,19 +139,46 @@ func run(log *slog.Logger) error {
 		Handler:      e,
 	}
 	go func() {
-		publicSrv.ListenAndServe()
+		log.Info("http public service start", "addr", cfg.Web.Addr)
+		serverErrors <- publicSrv.ListenAndServe()
 	}()
+
 	// ===========================================================================================
 	pe := echo.New()
 	setupPrivateRoutes(pe, log, stateM, ns)
 
 	privateSrv := &http.Server{
-		Addr:         cfg.Web.Addr,
+		Addr:         cfg.Web.PrivateAddr,
 		ReadTimeout:  cfg.Web.ReadTimeout,
 		WriteTimeout: cfg.Web.WriteTimeout,
 		IdleTimeout:  cfg.Web.IdleTimeout,
 		Handler:      pe,
 	}
-	privateSrv.ListenAndServe()
+	go func() {
+		log.Info("http private service start", "addr", cfg.Web.PrivateAddr)
+		serverErrors <- privateSrv.ListenAndServe()
+	}()
+
+	select {
+	case err := <-serverErrors:
+		return fmt.Errorf("server error: %w", err)
+	case sig := <-shutdown:
+		log.Info("shutdown", "status", "shutdown started", "signal", sig)
+		defer log.Info("shutdown", "status", "shutdown complete", "signal", sig)
+
+		ctx, cancelPub := context.WithTimeout(context.Background(), cfg.Web.ShutdownTimeout)
+		defer cancelPub()
+		if err := publicSrv.Shutdown(ctx); err != nil {
+			publicSrv.Close()
+		}
+
+		ctx, cancelPri := context.WithTimeout(context.Background(), cfg.Web.ShutdownTimeout)
+		defer cancelPri()
+		if err := privateSrv.Shutdown(ctx); err != nil {
+			privateSrv.Close()
+		}
+
+	}
+
 	return nil
 }
