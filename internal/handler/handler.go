@@ -186,13 +186,13 @@ func (h *Handler) BlocksByNumber(c echo.Context) error {
 }
 
 func (h *Handler) SubmitPeer(c echo.Context) error {
-	var peer peer.Peer
-	if err := c.Bind(&peer); err != nil {
+	var peerBody peer.Peer
+	if err := c.Bind(&peerBody); err != nil {
 		return c.String(http.StatusBadRequest, err.Error())
 	}
 
-	if !h.State.AddKnownPeer(peer) {
-		h.Log.Info("adding peer", "host", peer.Host)
+	if !h.State.AddKnownPeer(peerBody) {
+		h.Log.Info("adding peer", "host", peerBody.Host)
 	}
 
 	return c.JSON(http.StatusOK, nil)

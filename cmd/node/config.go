@@ -40,12 +40,12 @@ func NewConfig() Config {
 	idleTimeout, _ := strconv.Atoi(getenv.GetEnv("WEB_IDLE_TIMEOUT", "120"))
 	shutDownTimeout, _ := strconv.Atoi(getenv.GetEnv("WEB_SHUTDOWN_TIMEOUT", "20"))
 
-	originPeers := strings.Split(getenv.GetEnv("ORIGIN_PEERS", ":3030"), ",")
+	originPeers := strings.Split(getenv.GetEnv("ORIGIN_PEERS", "0.0.0.0:3030"), ",")
 
 	return Config{
 		Web: WebConfig{
-			Addr:            getenv.GetEnv("WEB_ADDR", ":3000"),
-			PrivateAddr:     getenv.GetEnv("WEB_PRIVATE_ADDR", ":3030"),
+			Addr:            getenv.GetEnv("WEB_ADDR", "0.0.0.0:3000"),
+			PrivateAddr:     getenv.GetEnv("WEB_PRIVATE_ADDR", "0.0.0.0:3030"),
 			WriteTimeout:    time.Duration(writeTimeout) * time.Second,
 			ReadTimeout:     time.Duration(readTimeout) * time.Second,
 			IdleTimeout:     time.Duration(idleTimeout) * time.Second,

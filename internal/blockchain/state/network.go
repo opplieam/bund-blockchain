@@ -46,7 +46,7 @@ func (s *State) NetSendTxToPeers(tx database.BlockTx) {
 	// the receiving node doesn't have it, then it will request the transaction
 	// based on the mempool key it received.
 
-	// For now, the Ardan blockchain just sends the full transaction.
+	// For now, the Bund blockchain just sends the full transaction.
 	for _, peer := range s.KnownExternalPeers() {
 		s.evHandler("state: NetSendTxToPeers: send: tx[%s] to peer[%s]", tx, peer)
 
@@ -68,7 +68,6 @@ func (s *State) NetSendNodeAvailableToPeers() {
 
 	for _, peer := range s.KnownExternalPeers() {
 		s.evHandler("state: NetSendNodeAvailableToPeers: send: host[%s] to peer[%s]", host, peer)
-
 		url := fmt.Sprintf("%s/peers", fmt.Sprintf(baseURL, peer.Host))
 
 		if err := send(http.MethodPost, url, host, nil); err != nil {
@@ -166,6 +165,7 @@ func send(method string, url string, dataSend any, dataRecv any) error {
 			return err
 		}
 		req, err = http.NewRequest(method, url, bytes.NewReader(data))
+		req.Header.Set("Content-Type", "application/json")
 		if err != nil {
 			return err
 		}
