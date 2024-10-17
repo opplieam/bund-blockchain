@@ -197,3 +197,25 @@ func (h *Handler) SubmitPeer(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, nil)
 }
+
+func (h *Handler) SubmitNodeTransaction(c echo.Context) error {
+	// Decode the JSON in the post call into a block transaction.
+	var tx database.BlockTx
+	if err := c.Bind(&tx); err != nil {
+		return c.String(http.StatusBadRequest, err.Error())
+	}
+
+	// Ask the state package to add this transaction to the mempool and perform
+	// any other business logic.
+	h.Log.Info("add tran", "sig:nonce", tx, "from", tx.FromID, "to", tx.ToID, "value", tx.Value, "tip", tx.Tip)
+	if err := h.State.UpsertNodeTransaction(tx); err != nil {
+		return c.String(http.StatusBadRequest, err.Error())
+	}
+
+	resp := struct {
+		Status string `json:"status"`
+	}{
+		Status: "transactions added to mempool",
+	}
+	return c.JSON(http.StatusOK, resp)
+}

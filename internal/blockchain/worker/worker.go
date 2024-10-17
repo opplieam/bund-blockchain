@@ -5,6 +5,7 @@ package worker
 import (
 	"sync"
 
+	"github.com/opplieam/bund-blockchain/internal/blockchain/database"
 	"github.com/opplieam/bund-blockchain/internal/blockchain/state"
 )
 
@@ -15,6 +16,7 @@ type Worker struct {
 	shut         chan struct{}
 	startMining  chan bool
 	cancelMining chan bool
+	txSharing    chan database.BlockTx
 	evHandler    state.EventHandler
 }
 
@@ -26,6 +28,7 @@ func Run(st *state.State, evHandler state.EventHandler) {
 		shut:         make(chan struct{}),
 		startMining:  make(chan bool, 1),
 		cancelMining: make(chan bool, 1),
+		txSharing:    make(chan database.BlockTx, maxTxShareRequests),
 		evHandler:    evHandler,
 	}
 	// Register this worker with the state package.
@@ -36,6 +39,7 @@ func Run(st *state.State, evHandler state.EventHandler) {
 
 	// Load the set of operations we need to run.
 	operations := []func(){
+		w.shareTxOperations,
 		w.powOperations,
 	}
 
@@ -99,6 +103,17 @@ func (w *Worker) SignalCancelMining() {
 	default:
 	}
 	w.evHandler("worker: SignalCancelMining: MINING: CANCEL: signaled")
+}
+
+// SignalShareTx signals a share transaction operation. If
+// maxTxShareRequests signals exist in the channel, we won't send these.
+func (w *Worker) SignalShareTx(blockTx database.BlockTx) {
+	select {
+	case w.txSharing <- blockTx:
+		w.evHandler("worker: SignalShareTx: share Tx signaled")
+	default:
+		w.evHandler("worker: SignalShareTx: queue full, transactions won't be shared.")
+	}
 }
 
 // =============================================================================

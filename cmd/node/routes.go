@@ -35,5 +35,6 @@ func setupPrivateRoutes(e *echo.Echo, log *slog.Logger, state *state.State, ns *
 	e.POST("/node/peers", h.SubmitPeer)
 	e.GET("/node/status", h.Status)
 	e.GET("/node/tx/list", h.PrivateMempool)
+	e.POST("/node/tx/submit", h.SubmitNodeTransaction)
 	e.GET("/node/block/list/:from/:to", h.BlocksByNumber)
 }
