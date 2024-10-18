@@ -27,9 +27,6 @@ go.work.sum
 # IDE
 .idea
 
-# Private key for accounts
-conf/accounts
-
 bin
 
 data
