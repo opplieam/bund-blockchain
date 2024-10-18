@@ -35,15 +35,12 @@ func run(log *slog.Logger) error {
 
 	// Load Env
 	args := os.Args[1]
-	switch args {
-	case "miner1":
-		if err := godotenv.Load("conf/miner1.env"); err != nil {
-			return err
-		}
-	case "miner2":
-		if err := godotenv.Load("conf/miner2.env"); err != nil {
-			return err
-		}
+	if args == "" {
+		return fmt.Errorf("missing required argument (eg. miner1)")
+	}
+	pathToLoad := fmt.Sprintf("conf/%s.env", args)
+	if err := godotenv.Load(pathToLoad); err != nil {
+		return fmt.Errorf("could not load .env file: %w", err)
 	}
 
 	// Load config
