@@ -21,6 +21,9 @@ up:
 up2:
 	go run cmd/node/*.go miner2
 
+up3:
+	go run cmd/node/*.go miner3
+
 # ==============================================================================
 # Transactions
 
