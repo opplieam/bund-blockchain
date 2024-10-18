@@ -10,7 +10,7 @@ SHELL := /bin/bash
 # miner3 Address: 0xfF75720644b5f40041C9dB0d4Cdc025A930EA939
 
 # Generate Private key
-# go run cmd/wallet/main.go generate
+# go run cmd/wallet/main.go generate -a bund
 # View Address
 # go run cmd/wallet/main.go account -a bund
 # go run cmd/wallet/main.go account -a opp
