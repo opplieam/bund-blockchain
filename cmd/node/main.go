@@ -105,6 +105,7 @@ func run(log *slog.Logger) error {
 		SelectStrategy: cfg.State.SelectStrategy,
 		KnownPeers:     peerSet,
 		EvHandler:      ev,
+		Consensus:      cfg.State.Consensus,
 	})
 	if err != nil {
 		return err

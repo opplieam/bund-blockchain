@@ -11,6 +11,12 @@ import (
 	"github.com/opplieam/bund-blockchain/internal/blockchain/peer"
 )
 
+// The set of different consensus protocols that can be used.
+const (
+	ConsensusPOW = "POW"
+	ConsensusPOA = "POA"
+)
+
 // EventHandler defines a function that is called when events
 // occur in the processing of persisting blocks.
 type EventHandler func(v string, args ...any)
@@ -35,6 +41,7 @@ type Config struct {
 	SelectStrategy string
 	KnownPeers     *peer.PeerSet
 	EvHandler      EventHandler
+	Consensus      string
 }
 
 // State manages the blockchain database.
@@ -44,6 +51,7 @@ type State struct {
 	beneficiaryID database.AccountID
 	host          string
 	evHandler     EventHandler
+	consensus     string
 
 	knownPeers *peer.PeerSet
 	storage    database.Storage
@@ -79,6 +87,7 @@ func New(cfg Config) (*State, error) {
 		host:          cfg.Host,
 		storage:       cfg.Storage,
 		evHandler:     ev,
+		consensus:     cfg.Consensus,
 
 		knownPeers: cfg.KnownPeers,
 		genesis:    cfg.Genesis,
@@ -110,6 +119,11 @@ func (s *State) Shutdown() error {
 // Host returns a copy of host information.
 func (s *State) Host() string {
 	return s.host
+}
+
+// Consensus returns a copy of consensus algorithm being used.
+func (s *State) Consensus() string {
+	return s.consensus
 }
 
 // LatestBlock returns a copy the current latest block.

@@ -23,6 +23,7 @@ type State struct {
 	DBPath         string
 	SelectStrategy string
 	OriginPeers    []string
+	Consensus      string
 }
 
 type WebConfig struct {
@@ -59,6 +60,7 @@ func NewConfig() Config {
 			DBPath:         getenv.GetEnv("DB_PATH", "data/miner1/"),
 			SelectStrategy: getenv.GetEnv("SELECT_STRATEGY", "Tip"),
 			OriginPeers:    originPeers,
+			Consensus:      getenv.GetEnv("CONSENSUS", "POW"),
 		},
 	}
 }
