@@ -17,18 +17,12 @@ SHELL := /bin/bash
 
 up:
 	go run cmd/node/*.go miner1
-upPOA:
-	go run cmd/node/*.go minerPOA1
 
 up2:
 	go run cmd/node/*.go miner2
-upPOA2:
-	go run cmd/node/*.go minerPOA2
 
 up3:
 	go run cmd/node/*.go miner3
-upPOA3:
-	go run cmd/node/*.go minerPOA3
 
 # ==============================================================================
 # Transactions
